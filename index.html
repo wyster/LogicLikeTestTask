@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <meta http-equiv="Expires" content="0"/>
+    <title>Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Faker/3.1.0/faker.js"></script>
+    <style>
+        #app {
+            margin: 50px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div>
+        <a href="javascript:;" @click="generator">Генератор случайных данных</a> /
+        <a href="javascript:;" @click="clearAll">Очистить всё</a>
+        <v-add :items="items"></v-add>
+        <v-list :items="items">
+            <v-form v-if="edit" :item="edit.item" @submit="editSubmit"></v-form>
+        </v-list>
+    </div>
+</div>
+<script type="text/x-template" id="list-template">
+    <div>
+        <slot></slot>
+        <div v-for="(item, i) in items">
+            {{item.name}} - {{item.phone}} /
+            <a href="javascript:;" @click="$parent.editItem(i)">Изменить</a> /
+            <a href="javascript:;" @click="deleteItem(i)">Удалить</a>
+        </div>
+    </div>
+</script>
+<script type="text/x-template" id="add-template">
+    <div>
+        <a href="javascript:;" @click="openForm">Добавить</a>
+        <v-form v-if="opened" @submit="submit"></v-form>
+    </div>
+</script>
+<script type="text/x-template" id="form-template">
+    <div>
+        <form @submit.prevent.stop="$emit('submit', $event)">
+            <input name="name" placeholder="Имя" type="text" required :value="item.name || ''"/>
+            <input name="phone" placeholder="Телефон" type="tel" required :value="item.phone || ''"/>
+            <input type="submit"/>
+        </form>
+    </div>
+</script>
+<script>
+  Vue.config.productionTip = false
+  Vue.config.devtools = true
+  Vue.component('v-form', {
+    template: '#form-template',
+    props: {
+      item: {
+        required: false,
+        type: Object,
+        default: () => {
+          return {}
+        }
+      }
+    }
+  })
+  Vue.component('v-list', {
+    template: '#list-template',
+    props: {
+      items: {
+        required: true,
+        type: Array
+      }
+    },
+    methods: {
+      deleteItem (index) {
+        this.$delete(this.items, index)
+      }
+    }
+  })
+  Vue.component('v-add', {
+    template: '#add-template',
+    data () {
+      return {
+        opened: false
+      }
+    },
+    props: {
+      items: {
+        required: true,
+        type: Array
+      }
+    },
+    methods: {
+      openForm () {
+        this.opened = !this.opened
+      },
+      submit (e) {
+        let formData = new FormData(e.target)
+        let object = {}
+        formData.forEach(function (value, key) {
+          object[key] = value
+        })
+
+        this.items.push(object)
+        this.opened = false
+      },
+    }
+  })
+
+  const app = new Vue({
+    el: '#app',
+    data () {
+      return {
+        items: [],
+        edit: null
+      }
+    },
+    created () {
+      let contacts = window.localStorage.getItem('contacts')
+      this.items = contacts ? JSON.parse(contacts) : []
+      this.$watch('items', value => {
+        window.localStorage.setItem('contacts', JSON.stringify(value))
+      }, {deep: true})
+    },
+    methods: {
+      editItem (index) {
+        this.edit = {index: index, item: this.items[index]}
+      },
+      editSubmit (e) {
+        let formData = new FormData(e.target)
+        let object = {}
+        formData.forEach(function (value, key) {
+          object[key] = value
+        })
+
+        this.items[this.edit.index] = object
+        this.edit = null
+        this.opened = false
+      },
+      clearAll() {
+        this.items.splice(0)
+      },
+      generator() {
+        for (let i = 0; i < 10; i++) {
+          this.items.push({
+            name: faker.name.findName(),
+            phone: faker.phone.phoneNumber()
+          })
+        }
+      }
+    }
+  })
+  console.log(app)
+</script>
+</body>
+</html>

@@ -29,3 +29,9 @@
 * Очистка стораджа
 
 `composer run storage-flush`
+
+
+# JS part
+
+* Достаточно запустить `index.html` в браузере
+
